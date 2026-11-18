@@ -1,0 +1,11 @@
+Terminal 1 — Backend
+
+iback
+
+Terminal 2 — Frontend
+
+ifront
+
+Terminal 3 — Pathway
+
+iai
