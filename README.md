@@ -1,9 +1,6 @@
 # Incident Intelligence System
 
 A real-time incident management platform powered by streaming RAG (Retrieval-Augmented Generation) using Pathway, enabling AI-assisted incident analysis with live data synchronization.
-
-**Submitted to DataQuest 2026, IIT Kharagpur**
-
 ---
 
 ## ⚡ Quick Start (2 Minutes)
@@ -539,21 +536,7 @@ Open http://localhost:5173 and verify:
 
 ---
 
-## Team
 
-**Project:** Incident Intelligence System  
-**Event:** DataQuest 2026, IIT Kharagpur  
-**Category:** Real-Time AI / Streaming Data
-
----
-
-## Acknowledgements
-
-- **Pathway** for the streaming RAG framework
-- **Groq** for fast and free LLM inference
-- **Supabase** for managed PostgreSQL and real-time subscriptions
-- **FastAPI** for the high-performance Python web framework
-- **IIT Kharagpur** for organizing DataQuest 2026
 
 ---
 
