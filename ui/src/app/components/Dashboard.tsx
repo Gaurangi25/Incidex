@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Incident, ChatMessage, LiveUpdate } from '../types';
 import { Header } from './Header';
@@ -11,7 +12,6 @@ import IncidentForm, { IncidentFormData } from './IncidentForm';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
 import { apiClient } from '../api/client';
 import { toast } from 'sonner';
-import { Plus } from 'lucide-react';
 
 export function Dashboard() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -35,11 +35,16 @@ export function Dashboard() {
   useEffect(() => {
     apiClient.connectWebSocket((data) => {
       console.log('WebSocket update:', data);
+
       if (data.type === 'connected') {
         console.log('WebSocket connected to incidents');
       }
-      if (data.type === 'incident_created' || data.type === 'incident_updated' || data.type === 'incident_deleted') {
-        // Incident changed, trigger refresh after Pathway polls (5s delay)
+
+      if (
+        data.type === 'incident_created' ||
+        data.type === 'incident_updated' ||
+        data.type === 'incident_deleted'
+      ) {
         setTimeout(() => {
           loadData();
           setIsSyncing(false);
@@ -64,25 +69,26 @@ export function Dashboard() {
       setIsLoading(false);
     } catch (error) {
       console.error('Failed to load data:', error);
+
       toast.error('Failed to load data', {
         description: 'Make sure the backend server is running'
       });
+
       setIsLoading(false);
     }
   };
 
   const handleSendMessage = async (message: string) => {
-    // Add user message
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       sender: 'user',
       message,
       timestamp: new Date()
     };
+
     setChatMessages(prev => [...prev, userMessage]);
 
     try {
-      // Get AI response from backend with history
       const aiResponse = await apiClient.sendChatMessage(message, chatMessages);
       setChatMessages(prev => [...prev, aiResponse]);
     } catch (error) {
@@ -101,19 +107,19 @@ export function Dashboard() {
     if (!selectedIncident) return;
 
     try {
-      // Update incident status to resolved in database
-      const updated = await apiClient.updateIncident(selectedIncident.id, { status: 'resolved' });
+      const updated = await apiClient.updateIncident(
+        selectedIncident.id,
+        { status: 'resolved' }
+      );
 
-      // Update local state
-      setIncidents(prev => prev.map(inc => inc.id === updated.id ? updated : inc));
+      setIncidents(prev =>
+        prev.map(inc => inc.id === updated.id ? updated : inc)
+      );
 
-      // Close modal
       setSelectedIncident(null);
 
-      // Show success
       toast.success(`${selectedIncident.id} marked as resolved`);
 
-      // Add to live updates
       const newUpdate: LiveUpdate = {
         id: `lu-${Date.now()}`,
         incidentId: selectedIncident.id,
@@ -121,9 +127,9 @@ export function Dashboard() {
         timestamp: new Date(),
         type: 'resolved'
       };
+
       setLiveUpdates(prev => [newUpdate, ...prev].slice(0, 10));
 
-      // Refresh data
       loadData();
     } catch (error) {
       console.error('Failed to mark resolved:', error);
@@ -131,16 +137,16 @@ export function Dashboard() {
     }
   };
 
-  // CRUD handlers
+  // Create Incident
   const handleCreateIncident = async (data: IncidentFormData) => {
     try {
       const newIncident = await apiClient.createIncident(data);
 
-      // Optimistic UI: Add with syncing indicator
       const optimisticIncident = {
         ...newIncident,
-        _syncing: true // Internal flag for UI
+        _syncing: true
       } as Incident;
+
       setIncidents(prev => [optimisticIncident, ...prev]);
       setShowCreateModal(false);
       setIsSyncing(true);
@@ -149,67 +155,82 @@ export function Dashboard() {
         description: 'Syncing with intelligence layer...'
       });
 
-      // Refresh after Pathway polling cycle (~5s)
       setTimeout(() => {
         loadData();
         setIsSyncing(false);
         toast.success('Incident synced successfully');
       }, 5500);
+
     } catch (error) {
       console.error('Failed to create incident:', error);
       throw error;
     }
   };
 
+  // Update Incident
   const handleUpdateIncident = async (data: IncidentFormData) => {
     if (!editingIncident) return;
 
     try {
       const updated = await apiClient.updateIncident(editingIncident.id, data);
-      setIncidents(prev => prev.map(inc => inc.id === updated.id ? updated : inc));
+
+      setIncidents(prev =>
+        prev.map(inc => inc.id === updated.id ? updated : inc)
+      );
+
       setEditingIncident(null);
+
       toast.success('Incident updated successfully');
-      loadData(); // Refresh to ensure sync
+
+      loadData();
     } catch (error) {
       console.error('Failed to update incident:', error);
       throw error;
     }
   };
 
+  // Delete Incident
   const handleDeleteIncident = async () => {
     if (!deletingIncident) return;
 
     try {
       await apiClient.deleteIncident(deletingIncident.id);
-      setIncidents(prev => prev.filter(inc => inc.id !== deletingIncident.id));
+
+      setIncidents(prev =>
+        prev.filter(inc => inc.id !== deletingIncident.id)
+      );
+
       setDeletingIncident(null);
+
       toast.success('Incident deleted successfully');
-      loadData(); // Refresh to ensure sync
+
+      loadData();
     } catch (error) {
       console.error('Failed to delete incident:', error);
       toast.error('Failed to delete incident');
     }
   };
 
+  // Escalate Incident
   const handleEscalate = async () => {
     if (!selectedIncident) return;
 
     try {
-      // Escalate by upgrading severity to critical
-      const updated = await apiClient.updateIncident(selectedIncident.id, { severity: 'critical' });
+      const updated = await apiClient.updateIncident(
+        selectedIncident.id,
+        { severity: 'critical' }
+      );
 
-      // Update local state
-      setIncidents(prev => prev.map(inc => inc.id === updated.id ? updated : inc));
+      setIncidents(prev =>
+        prev.map(inc => inc.id === updated.id ? updated : inc)
+      );
 
-      // Update modal if still open
       if (selectedIncident.id === updated.id) {
         setSelectedIncident(updated);
       }
 
-      // Show warning
       toast.warning(`${selectedIncident.id} escalated to CRITICAL severity`);
 
-      // Add to live updates
       const newUpdate: LiveUpdate = {
         id: `lu-${Date.now()}`,
         incidentId: selectedIncident.id,
@@ -217,9 +238,9 @@ export function Dashboard() {
         timestamp: new Date(),
         type: 'escalated'
       };
+
       setLiveUpdates(prev => [newUpdate, ...prev].slice(0, 10));
 
-      // Refresh data
       loadData();
     } catch (error) {
       console.error('Failed to escalate:', error);
@@ -229,38 +250,48 @@ export function Dashboard() {
 
   const stats = {
     totalActive: incidents.length,
-    criticalCount: incidents.filter(inc => inc.severity === 'critical').length,
+    criticalCount: incidents.filter(
+      inc => inc.severity === 'critical'
+    ).length,
     avgResolutionTime: '2.4h'
   };
 
-  // Show loading state
+  // Loading Screen
   if (isLoading) {
     return (
-      <div className="h-screen flex flex-col bg-slate-50">
+      <div className="h-screen w-full flex flex-col bg-[#080f1e] overflow-hidden">
         <Header
           onSearch={handleSearch}
           notificationCount={0}
         />
-        <div className="flex-1 flex items-center justify-center">
+
+        <div className="flex-1 flex items-center justify-center bg-[#080f1e]">
           <LoadingState />
         </div>
       </div>
     );
   }
 
-  // Show empty state if no incidents
+  // Empty State
   if (incidents.length === 0) {
-    return <EmptyState />;
+    return (
+      <div className="min-h-screen w-full bg-[#080f1e]">
+        <EmptyState />
+      </div>
+    );
   }
 
+  // Main Dashboard
   return (
-    <div className="h-screen flex flex-col bg-slate-50">
+    <div className="h-screen w-full flex flex-col bg-[#080f1e] overflow-hidden">
+
       <Header
         onSearch={handleSearch}
         notificationCount={stats.criticalCount}
       />
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden bg-[#080f1e]">
+
         <IncidentList
           incidents={incidents}
           onSelectIncident={setSelectedIncident}
@@ -282,8 +313,10 @@ export function Dashboard() {
             contextSize: chatMessages.filter(m => m.sender === 'ai').slice(-1)[0]?.contextSize || null
           }}
         />
+
       </div>
 
+      {/* Incident Details */}
       {selectedIncident && (
         <IncidentDetailModal
           incident={selectedIncident}
@@ -302,7 +335,7 @@ export function Dashboard() {
         />
       )}
 
-      {/* CRUD Modals */}
+      {/* Create Incident */}
       {showCreateModal && (
         <IncidentForm
           onSubmit={handleCreateIncident}
@@ -310,6 +343,7 @@ export function Dashboard() {
         />
       )}
 
+      {/* Edit Incident */}
       {editingIncident && (
         <IncidentForm
           incident={editingIncident}
@@ -318,6 +352,7 @@ export function Dashboard() {
         />
       )}
 
+      {/* Delete Confirmation */}
       {deletingIncident && (
         <DeleteConfirmDialog
           incidentTitle={deletingIncident.title}
@@ -325,6 +360,7 @@ export function Dashboard() {
           onCancel={() => setDeletingIncident(null)}
         />
       )}
+
     </div>
   );
 }
