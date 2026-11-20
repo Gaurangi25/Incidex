@@ -536,10 +536,3 @@ Open http://localhost:5173 and verify:
 
 ---
 
-
-
----
-
-## License
-
-This project is submitted for DataQuest 2026 evaluation purposes.
